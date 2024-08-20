@@ -1,5 +1,6 @@
 import {useLoaderData} from '@remix-run/react';
 import {json} from '@shopify/remix-oxygen';
+import {Image} from '@shopify/hydrogen-react';
 
 export async function loader({params, context}) {
   const {handle} = params;
@@ -25,7 +26,9 @@ export default function ProductHandle() {
       <div className="grid items-start gap-6 lg:gap-20 md:grid-cols-2 lg:grid-cols-3">
         <div className="grid md:grid-flow-row  md:p-0 md:overflow-x-hidden md:grid-cols-2 md:w-full lg:col-span-2">
           <div className="md:col-span-2 snap-center card-image aspect-square md:w-full w-[80vw] shadow rounded">
-            <h2>TODO Product Image</h2>
+            <h2><Image className={`w-full h-full aspect-square object-cover`}
+            data={product.featuredImage}/>
+            </h2>
           </div>
         </div>
         <div className="md:sticky md:mx-auto max-w-xl md:max-w-[24rem] grid gap-2 p-0 md:p-6 md:px-0 top-[6rem] lg:top-[8rem] xl:top-[10rem]">
