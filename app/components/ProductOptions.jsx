@@ -1,8 +1,11 @@
-import {Link, useLocation} from '@remix-run/react';
+import {Link, useLocation, useSearchParams} from '@remix-run/react';
 
 export default function ProductOptions({ options }) {
     // pathname and search will be used to build option URLs
     const { pathname, search } = useLocation();
+    const [currentSearchParams] = useSearchParams();
+
+    const searchParams = currentSearchParams;
   
     return (
       <div className="grid gap-4 mb-6">
@@ -11,6 +14,8 @@ export default function ProductOptions({ options }) {
           if (!option.optionValues.length) {
             return null;
           }
+           // get the currently selected option value
+          const currentOptionVal = searchParams.get(option.name);
           return (
             <div
               key={option.name}
@@ -25,6 +30,7 @@ export default function ProductOptions({ options }) {
                   // Build a URLSearchParams object from the current search string
                   const linkParams = new URLSearchParams(search);
                   // Set the option name and value, overwriting any existing values
+                  const isSelected = currentOptionVal === value;
                   linkParams.set(option.name, value.name);
                   return (
                     <Link
@@ -32,7 +38,9 @@ export default function ProductOptions({ options }) {
                       to={`${pathname}?${linkParams.toString()}`}
                       preventScrollReset
                       replace
-                      className="leading-none py-1 border-b-[1.5px] cursor-pointer hover:no-underline transition-all duration-200"
+                      className={`leading-none py-1 cursor-pointer transition-all duration-200 ${
+                        isSelected ? 'underline' : 'no-underline'
+                      }`}
                     >
                       {value.name}
                     </Link>
