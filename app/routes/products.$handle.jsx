@@ -1,6 +1,7 @@
 import {useLoaderData} from '@remix-run/react';
 import {json} from '@shopify/remix-oxygen';
 import {Image} from '@shopify/hydrogen-react';
+import ProductOptions from '~/components/ProductOptions';
 
 export async function loader({params, context}) {
   const {handle} = params;
@@ -12,7 +13,7 @@ export async function loader({params, context}) {
   if (!product?.id) {
     throw new Response(null, {status: 404});
   }
-
+  console.log(JSON.stringify(product.options))
   return json({
     handle,
     product,
@@ -40,7 +41,7 @@ export default function ProductHandle() {
               {product.vendor}
             </span>
           </div>
-          <h3>TODO Product Options</h3>
+          <ProductOptions options={product.options} />
           <div
             className="prose border-t border-gray-200 pt-6 text-black text-md"
             dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
