@@ -3,22 +3,32 @@ import {json} from '@shopify/remix-oxygen';
 import {Image} from '@shopify/hydrogen-react';
 import ProductOptions from '~/components/ProductOptions';
 
-export async function loader({params, context}) {
+export async function loader({params, context, request}) {
   const {handle} = params;
+  const searchParams = new URL(request.url).searchParams;
+  const selectedOptions = [];
+
+  // set selected options from the query string
+  searchParams.forEach((value, name) => {
+    selectedOptions.push({name, value});
+  });
+
   const {product} = await context.storefront.query(PRODUCT_QUERY, {
     variables: {
-      handle
-    }
-  }); 
+      handle,
+      selectedOptions,
+    },
+  });
+
   if (!product?.id) {
     throw new Response(null, {status: 404});
   }
-  console.log(JSON.stringify(product.options))
+
   return json({
-    handle,
     product,
   });
 }
+
 export default function ProductHandle() {
   const {product} = useLoaderData();
 
@@ -27,8 +37,10 @@ export default function ProductHandle() {
       <div className="grid items-start gap-6 lg:gap-20 md:grid-cols-2 lg:grid-cols-3">
         <div className="grid md:grid-flow-row  md:p-0 md:overflow-x-hidden md:grid-cols-2 md:w-full lg:col-span-2">
           <div className="md:col-span-2 snap-center card-image aspect-square md:w-full w-[80vw] shadow rounded">
-            <h2><Image className={`w-full h-full aspect-square object-cover`}
-            data={product.featuredImage}/>
+            <h2><Image
+          className={`w-full h-full aspect-square object-cover`}
+          data={product.selectedVariant?.image || product.featuredImage}
+          />
             </h2>
           </div>
         </div>
@@ -53,7 +65,7 @@ export default function ProductHandle() {
 }
 
 const PRODUCT_QUERY = `#graphql
-  query product($handle: String!) {
+  query product($handle: String!, $selectedOptions: [SelectedOptionInput!]!) {
     product(handle: $handle) {
       id
       title
@@ -72,6 +84,58 @@ const PRODUCT_QUERY = `#graphql
         name,
         optionValues {
           name
+        }
+      }
+      selectedVariant: variantBySelectedOptions(selectedOptions: $selectedOptions) {
+        id
+        availableForSale
+        selectedOptions {
+          name
+          value
+        }
+        image {
+          id
+          url
+          altText
+          width
+          height
+        }
+        price {
+          amount
+          currencyCode
+        }
+        compareAtPrice {
+          amount
+          currencyCode
+        }
+        sku
+        title
+        unitPrice {
+          amount
+          currencyCode
+        }
+        product {
+          title
+          handle
+        }
+      }
+      variants(first: 1) {
+        nodes {
+          id
+          title
+          availableForSale
+          price {
+            currencyCode
+            amount
+          }
+          compareAtPrice {
+            currencyCode
+            amount
+          }
+          selectedOptions {
+            name
+            value
+          }
         }
       }
     }
