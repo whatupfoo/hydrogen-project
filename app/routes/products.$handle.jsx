@@ -1,6 +1,6 @@
 import {useLoaderData} from '@remix-run/react';
 import {json} from '@shopify/remix-oxygen';
-import {Image} from '@shopify/hydrogen-react';
+import {Image, Money, ShopPayButton} from '@shopify/hydrogen-react';
 import ProductOptions from '~/components/ProductOptions';
 
 export async function loader({params, context, request}) {
@@ -13,7 +13,7 @@ export async function loader({params, context, request}) {
     selectedOptions.push({name, value});
   });
 
-  const {product} = await context.storefront.query(PRODUCT_QUERY, {
+  const {shop, product} = await context.storefront.query(PRODUCT_QUERY, {
     variables: {
       handle,
       selectedOptions,
@@ -24,13 +24,18 @@ export async function loader({params, context, request}) {
     throw new Response(null, {status: 404});
   }
 
+    // Set a default variant so you always have an "orderable" product selected
+    const selectedVariant = product.selectedVariant ?? product?.variants?.nodes[0]
+
   return json({
+    shop,
     product,
+    selectedVariant,
   });
 }
 
 export default function ProductHandle() {
-  const {product} = useLoaderData();
+  const {shop, product, selectedVariant} = useLoaderData();
 
   return (
     <section className="w-full gap-4 md:gap-8 grid px-6 md:px-8 lg:px-12">
@@ -53,7 +58,22 @@ export default function ProductHandle() {
               {product.vendor}
             </span>
           </div>
-          <ProductOptions options={product.options} />
+          <ProductOptions
+            options={product.options}
+            selectedVariant={selectedVariant}
+          />
+          <Money
+            withoutTrailingZeros
+            data={selectedVariant.price}
+            className="text-xl font-semibold mb-2"
+          />
+          {selectedVariant.availableForSale && (
+            <ShopPayButton
+              storeDomain={shop.primaryDomain.url}
+              variantIds={[selectedVariant?.id]}
+              width={'400px'}
+            />
+          )}
           <div
             className="prose border-t border-gray-200 pt-6 text-black text-md"
             dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
@@ -66,6 +86,11 @@ export default function ProductHandle() {
 
 const PRODUCT_QUERY = `#graphql
   query product($handle: String!, $selectedOptions: [SelectedOptionInput!]!) {
+    shop {
+      primaryDomain {
+        url
+      }
+    }
     product(handle: $handle) {
       id
       title
