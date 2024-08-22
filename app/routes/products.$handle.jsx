@@ -1,6 +1,7 @@
 import {useLoaderData} from '@remix-run/react';
 import {json} from '@shopify/remix-oxygen';
 import {Image, Money, ShopPayButton} from '@shopify/hydrogen-react';
+import {CartForm} from '@shopify/hydrogen';
 import ProductOptions from '~/components/ProductOptions';
 
 export async function loader({params, context, request}) {
@@ -74,6 +75,37 @@ export default function ProductHandle() {
               width={'400px'}
             />
           )}
+          <CartForm
+            route="/cart"
+            inputs={{
+              lines: [
+                {
+                  merchandiseId: selectedVariant.id,
+                },
+              ],
+            }}
+            action={CartForm.ACTIONS.LinesAdd}
+          >
+            {(fetcher) => (
+              <>
+                <button
+                  type="submit"
+                  onClick={() => {
+                    window.location.href = window.location.href + '#cart-aside';
+                  }}
+                  disabled={
+                    !selectedVariant.availableForSale ||
+                    fetcher.state !== 'idle'
+                  }
+                  className="border border-black rounded-sm w-full px-4 py-2 text-white bg-black uppercase hover:bg-white hover:text-black transition-colors duration-150"
+                >
+                  {selectedVariant?.availableForSale
+                    ? 'Add to cart'
+                    : 'Sold out'}
+                </button>
+              </>
+            )}
+          </CartForm>
           <div
             className="prose border-t border-gray-200 pt-6 text-black text-md"
             dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
