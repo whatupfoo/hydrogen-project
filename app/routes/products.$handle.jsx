@@ -9,7 +9,7 @@ export async function loader({params, context, request}) {
   const searchParams = new URL(request.url).searchParams;
   const selectedOptions = [];
 
-  // set selected options from the query string
+  // Set selected options from the query string
   searchParams.forEach((value, name) => {
     selectedOptions.push({name, value});
   });
@@ -25,8 +25,8 @@ export async function loader({params, context, request}) {
     throw new Response(null, {status: 404});
   }
 
-    // Set a default variant so you always have an "orderable" product selected
-    const selectedVariant = product.selectedVariant ?? product?.variants?.nodes[0]
+  // Set a default variant so you always have an "orderable" product selected
+  const selectedVariant = product.selectedVariant ?? product?.variants?.nodes[0];
 
   return json({
     shop,
@@ -38,15 +38,23 @@ export async function loader({params, context, request}) {
 export default function ProductHandle() {
   const {shop, product, selectedVariant} = useLoaderData();
 
+  // Extract metafields safely
+  const metafields = product?.metafields || [];
+
+  // Find specific metafields safely
+  const additionalFeatures = metafields.find(mf => mf?.key === 'additional_features');
+  const manufacturerInfo = metafields.find(mf => mf?.key === 'manufacturer_info');
+
   return (
     <section className="w-full gap-4 md:gap-8 grid px-6 md:px-8 lg:px-12">
       <div className="grid items-start gap-6 lg:gap-20 md:grid-cols-2 lg:grid-cols-3">
         <div className="grid md:grid-flow-row  md:p-0 md:overflow-x-hidden md:grid-cols-2 md:w-full lg:col-span-2">
           <div className="md:col-span-2 snap-center card-image aspect-square md:w-full w-[80vw] shadow rounded">
-            <h2><Image
-          className={`w-full h-full aspect-square object-cover`}
-          data={product.selectedVariant?.image || product.featuredImage}
-          />
+            <h2>
+              <Image
+                className={`w-full h-full aspect-square object-cover`}
+                data={product.selectedVariant?.image || product.featuredImage}
+              />
             </h2>
           </div>
         </div>
@@ -110,6 +118,20 @@ export default function ProductHandle() {
             className="prose border-t border-gray-200 pt-6 text-black text-md"
             dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
           ></div>
+          {additionalFeatures && (
+            <div className="prose border-t border-gray-200 pt-6 text-black text-md">
+              <h3>Additional Features</h3>
+              <p>{additionalFeatures.value}</p>
+            </div>
+          )}
+
+          {manufacturerInfo && manufacturerInfo.reference && (
+            <div className="prose border-t border-gray-200 pt-6 text-black text-md">
+              <h3>Manufacturer Info</h3>
+              <p><strong>Name:</strong> {manufacturerInfo.reference.fields.find(field => field?.key === 'name')?.value}</p>
+              <p><strong>Description:</strong> {manufacturerInfo.reference.fields.find(field => field?.key === 'description')?.value}</p>
+            </div>
+          )}
         </div>
       </div>
     </section>
@@ -130,7 +152,28 @@ const PRODUCT_QUERY = `#graphql
       vendor
       description
       descriptionHtml
-      featuredImage{
+      metafields(
+        identifiers: [
+          { key: "additional_features", namespace: "furniture" }
+          { key: "manufacturer_info", namespace: "furniture" }
+        ]
+      ) {
+        key
+        value
+        type
+        reference {
+          ... on Metaobject {
+            id
+            handle
+            fields {
+              key
+              value
+              type
+            }
+          }
+        }
+      }
+      featuredImage {
         id
         url
         altText
@@ -138,7 +181,7 @@ const PRODUCT_QUERY = `#graphql
         height
       }
       options {
-        name,
+        name
         optionValues {
           name
         }
