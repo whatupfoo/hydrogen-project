@@ -42,6 +42,7 @@ export default function Collection() {
               <p className="max-w-md whitespace-pre-wrap inherit text-copy inline-block">
                 {collection.description}
               </p>
+              <p>HEllo</p>
             </div>
           </div>
         )}
