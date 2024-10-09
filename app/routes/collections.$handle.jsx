@@ -35,6 +35,7 @@ export default function Collection() {
         <h1 className="text-4xl whitespace-pre-wrap font-bold inline-block">
           {collection.title}
         </h1>
+        <h2>testing o2 deployments</h2>
 
         {collection.description && (
           <div className="flex items-baseline justify-between w-full">
